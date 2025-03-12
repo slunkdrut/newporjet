@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Solano's - Mob Life on Solana</title>
+    <!-- Load the standalone audio player script before React -->
+    <script src="/arcadesolanos/audioPlayer.js"></script>
+    <script>
+      // This script helps with audio autoplay on mobile devices
+      // It initializes the audio context on first user interaction
+      window.addEventListener('DOMContentLoaded', function() {
+        // Create a silent audio context to unlock audio on iOS and other mobile browsers
+        function unlockAudio() {
+          // Create audio context
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            const audioCtx = new AudioContext();
+            
+            // Create empty buffer and play it
+            const buffer = audioCtx.createBuffer(1, 1, 22050);
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioCtx.destination);
+            
+            // Play the empty buffer
+            if (source.start) {
+              source.start(0);
+            } else if (source.noteOn) {
+              source.noteOn(0);
+            }
+            
+            // Resume audio context if it's suspended (needed for Chrome)
+            if (audioCtx.state === 'suspended') {
+              audioCtx.resume();
+            }
+
+            // Try to start our standalone player if it exists
+            if (window.SolanoAudioPlayer && !window.SolanoAudioPlayer.isMuted) {
+              window.SolanoAudioPlayer.play();
+            }
+          }
+          
+          // Remove event listeners after first interaction
+          document.removeEventListener('touchstart', unlockAudio);
+          document.removeEventListener('touchend', unlockAudio);
+          document.removeEventListener('click', unlockAudio);
+          document.removeEventListener('keydown', unlockAudio);
+        }
+        
+        // Try to unlock audio immediately
+        unlockAudio();
+        
+        // Also try on any user interaction
+        const interactionEvents = ['touchstart', 'touchend', 'mousedown', 'keydown', 'scroll', 'click'];
+        interactionEvents.forEach(function(eventName) {
+          document.addEventListener(eventName, function() {
+            unlockAudio();
+            // Try to play using our standalone player
+            if (window.SolanoAudioPlayer && 
+                !window.SolanoAudioPlayer.isMuted && 
+                window.SolanoAudioPlayer.audioElement && 
+                window.SolanoAudioPlayer.audioElement.paused) {
+              window.SolanoAudioPlayer.play();
+            }
+          }, { once: false });
+        });
+        
+        // Also try on window focus
+        window.addEventListener('focus', function() {
+          unlockAudio();
+          // Try to play background music if it exists
+          if (window.TheSolanoAudio && 
+              window.TheSolanoAudio.backgroundMusic && 
+              !window.TheSolanoAudio.isMuted && 
+              window.TheSolanoAudio.backgroundMusic.paused) {
+            window.TheSolanoAudio.backgroundMusic.play().catch(function(e) {
+              console.log('Cannot play on focus:', e);
+            });
+          }
+        });
+      });
+    </script>
+    <script type="module" crossorigin src="/arcadesolanos/assets/index-BO8jn44b.js"></script>
+    <link rel="stylesheet" crossorigin href="/arcadesolanos/assets/index-YbC8QhdJ.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
